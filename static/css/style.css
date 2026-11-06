@@ -1,0 +1,33 @@
+:root { --brand: #4f46e5; --brand-2: #7c3aed; }
+body { background: #f4f6fb; min-height: 100vh; }
+[data-bs-theme="dark"] body { background: #0f1220; }
+
+.sidebar { width: 245px; min-height: 100vh; background: linear-gradient(180deg, #1e1b4b, #312e81); position: fixed; top: 0; left: 0; z-index: 1030; transition: transform .25s; }
+.sidebar .brand { color: #fff; font-weight: 700; font-size: 1.25rem; padding: 1.4rem 1.5rem; display: block; text-decoration: none; }
+.sidebar .nav-link { color: #c7d2fe; padding: .7rem 1.5rem; border-left: 3px solid transparent; font-weight: 500; }
+.sidebar .nav-link i { width: 24px; display: inline-block; }
+.sidebar .nav-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+.sidebar .nav-link.active { background: rgba(255,255,255,.14); color: #fff; border-left-color: #a5b4fc; }
+.main { margin-left: 245px; padding: 1.5rem 2rem; }
+@media (max-width: 991px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin-left: 0; padding: 1rem; }
+}
+
+.card { border: 0; border-radius: 1rem; box-shadow: 0 2px 12px rgba(30,27,75,.07); }
+[data-bs-theme="dark"] .card { box-shadow: none; border: 1px solid rgba(255,255,255,.08); }
+.stat-card .icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; }
+.stat-card .value { font-size: 1.6rem; font-weight: 700; }
+.btn-brand { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; border: 0; }
+.btn-brand:hover { color: #fff; opacity: .92; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.badge-cat { background: rgba(79,70,229,.1); color: inherit; font-weight: 500; }
+.progress { height: 10px; border-radius: 10px; }
+.page-title { font-weight: 700; }
+.table > :not(caption) > * > * { vertical-align: middle; }
+
+.auth-wrap { min-height: 100vh; display: grid; place-items: center; background: linear-gradient(135deg, #4f46e5, #7c3aed 60%, #db2777); padding: 1rem; }
+.auth-card { width: 100%; max-width: 430px; border-radius: 1.25rem; }
+.fab { position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; font-size: 1.6rem; display: grid; place-items: center; box-shadow: 0 6px 18px rgba(79,70,229,.45); z-index: 1000; }
+@media print { .sidebar, .no-print, .fab { display: none !important; } .main { margin: 0; } }

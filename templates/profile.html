@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<h3 class="page-title mb-3">My profile</h3>
+<div class="row g-3" style="max-width:900px">
+  <div class="col-md-6"><div class="card p-3">
+    <h6 class="fw-bold">Details</h6>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="details">
+      <div class="mb-2"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ user.name }}" required></div>
+      <div class="mb-2"><label class="form-label">Email</label><input class="form-control" value="{{ user.email }}" disabled></div>
+      <div class="mb-3"><label class="form-label">Currency</label>
+        <select name="currency" class="form-select">{% for c in currencies %}<option {{ 'selected' if c==user.currency }}>{{ c }}</option>{% endfor %}</select></div>
+      <button class="btn btn-brand">Save changes</button>
+    </form>
+  </div></div>
+  <div class="col-md-6"><div class="card p-3">
+    <h6 class="fw-bold">Change password</h6>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="password">
+      <div class="mb-2"><label class="form-label">Current password</label><input type="password" name="old" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">New password</label><input type="password" name="new" minlength="6" class="form-control" required></div>
+      <button class="btn btn-outline-primary">Update password</button>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

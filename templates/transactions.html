@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="page-title mb-0">Transactions</h3>
+  <a href="{{ url_for('add_transaction') }}" class="btn btn-brand"><i class="bi bi-plus-lg me-1"></i>Add</a>
+</div>
+
+<div class="card p-3 mb-3 no-print">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small mb-1">Search</label>
+      <input name="q" class="form-control" placeholder="Description…" value="{{ f.get('q','') }}"></div>
+    <div class="col-md-2"><label class="form-label small mb-1">Category</label>
+      <select name="category" class="form-select"><option value="">All</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if f.get('category')==c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label small mb-1">Type</label>
+      <select name="type" class="form-select"><option value="">All</option>
+        <option value="expense" {{ 'selected' if f.get('type')=='expense' }}>Expense</option>
+        <option value="income" {{ 'selected' if f.get('type')=='income' }}>Income</option></select></div>
+    <div class="col-md-2"><label class="form-label small mb-1">Payment</label>
+      <select name="payment" class="form-select"><option value="">All</option>
+        {% for p in payment_methods %}<option {{ 'selected' if f.get('payment')==p }}>{{ p }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-1">Sort</label>
+      <select name="sort" class="form-select">
+        <option value="date_desc" {{ 'selected' if f.get('sort')=='date_desc' }}>Newest first</option>
+        <option value="date_asc" {{ 'selected' if f.get('sort')=='date_asc' }}>Oldest first</option>
+        <option value="amt_desc" {{ 'selected' if f.get('sort')=='amt_desc' }}>Highest amount</option>
+        <option value="amt_asc" {{ 'selected' if f.get('sort')=='amt_asc' }}>Lowest amount</option></select></div>
+    <div class="col-md-3"><label class="form-label small mb-1">From</label><input type="date" name="start" class="form-control" value="{{ f.get('start','') }}"></div>
+    <div class="col-md-3"><label class="form-label small mb-1">To</label><input type="date" name="end" class="form-control" value="{{ f.get('end','') }}"></div>
+    <div class="col-md-6 d-flex gap-2">
+      <button class="btn btn-brand"><i class="bi bi-search me-1"></i>Filter</button>
+      <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-4"><div class="card p-3"><div class="small text-body-secondary">Income (filtered)</div><div class="fs-5 fw-bold text-success">{{ summary.income|money }}</div></div></div>
+  <div class="col-4"><div class="card p-3"><div class="small text-body-secondary">Expenses (filtered)</div><div class="fs-5 fw-bold text-danger">{{ summary.expense|money }}</div></div></div>
+  <div class="col-4"><div class="card p-3"><div class="small text-body-secondary">Records</div><div class="fs-5 fw-bold">{{ count }}</div></div></div>
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Payment</th><th class="text-end">Amount</th><th class="text-end no-print">Actions</th></tr></thead>
+      <tbody>
+      {% for t in rows %}
+        <tr>
+          <td class="text-nowrap">{{ t.txn_date.strftime('%d %b %Y') }}</td>
+          <td>{{ t.description }}</td>
+          <td><span class="badge badge-cat"><span class="dot" style="background:{{ t.color or '#adb5bd' }}"></span>{{ t.cat_name or 'Uncategorized' }}</span></td>
+          <td>{{ t.payment_method }}</td>
+          <td class="text-end fw-semibold {{ 'text-success' if t.type=='income' else 'text-danger' }}">{{ '+' if t.type=='income' else '-' }}{{ t.amount|money }}</td>
+          <td class="text-end text-nowrap no-print">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('edit_transaction', tid=t.id) }}"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{{ url_for('delete_transaction', tid=t.id) }}" class="d-inline" data-confirm="Delete this transaction?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="text-center text-body-secondary py-5">No transactions found.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pages > 1 %}
+  <nav class="mt-3 no-print"><ul class="pagination justify-content-center mb-0">
+    <li class="page-item {{ 'disabled' if page<=1 }}"><a class="page-link" href="{{ url_for('transactions', page=page-1, **qs) }}">Prev</a></li>
+    {% for p in range(1, pages+1) %}
+      {% if p==1 or p==pages or (p>=page-2 and p<=page+2) %}
+        <li class="page-item {{ 'active' if p==page }}"><a class="page-link" href="{{ url_for('transactions', page=p, **qs) }}">{{ p }}</a></li>
+      {% elif p==page-3 or p==page+3 %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+    {% endfor %}
+    <li class="page-item {{ 'disabled' if page>=pages }}"><a class="page-link" href="{{ url_for('transactions', page=page+1, **qs) }}">Next</a></li>
+  </ul></nav>
+  {% endif %}
+</div>
+{% endblock %}

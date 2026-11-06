@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} Transaction{% endblock %}
+{% block content %}
+<h3 class="page-title mb-3">{{ mode }} transaction</h3>
+<div class="card p-4" style="max-width:720px">
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="btn-group w-100 mb-4" role="group">
+      <input type="radio" class="btn-check" name="type" id="t_exp" value="expense" {{ 'checked' if t.get('type','expense')!='income' }}>
+      <label class="btn btn-outline-danger" for="t_exp"><i class="bi bi-arrow-up-circle me-1"></i>Expense</label>
+      <input type="radio" class="btn-check" name="type" id="t_inc" value="income" {{ 'checked' if t.get('type')=='income' }}>
+      <label class="btn btn-outline-success" for="t_inc"><i class="bi bi-arrow-down-circle me-1"></i>Income</label>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Amount ({{ currency }})</label>
+        <input type="number" step="0.01" min="0.01" name="amount" class="form-control form-control-lg" value="{{ t.get('amount','') }}" required autofocus></div>
+      <div class="col-md-6"><label class="form-label">Date</label>
+        <input type="date" name="txn_date" class="form-control form-control-lg" value="{{ t.get('txn_date','') }}" required></div>
+      <div class="col-12"><label class="form-label">Description</label>
+        <input name="description" maxlength="255" class="form-control" placeholder="e.g. Lunch at cafe" value="{{ t.get('description','') }}" required></div>
+      <div class="col-md-6"><label class="form-label">Category</label>
+        <select name="category_id" class="form-select"><option value="">— None —</option>
+          {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if t.get('category_id')|string==c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label">Payment method</label>
+        <select name="payment_method" class="form-select">
+          {% for p in payment_methods %}<option {{ 'selected' if t.get('payment_method')==p }}>{{ p }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-brand px-4">Save</button>
+      <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

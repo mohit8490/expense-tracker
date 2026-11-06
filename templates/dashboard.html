@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="page-title mb-0">Dashboard <small class="text-body-secondary fs-6">{{ month_label }}</small></h3>
+  <a href="{{ url_for('add_transaction') }}" class="btn btn-brand"><i class="bi bi-plus-lg me-1"></i>Add</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="card stat-card p-3"><div class="d-flex align-items-center gap-3">
+    <div class="icon bg-success-subtle text-success"><i class="bi bi-arrow-down-circle"></i></div>
+    <div><div class="text-body-secondary small">Income (month)</div><div class="value">{{ totals.income|money }}</div></div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card p-3"><div class="d-flex align-items-center gap-3">
+    <div class="icon bg-danger-subtle text-danger"><i class="bi bi-arrow-up-circle"></i></div>
+    <div><div class="text-body-secondary small">Expenses (month)</div><div class="value">{{ totals.expense|money }}</div></div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card p-3"><div class="d-flex align-items-center gap-3">
+    <div class="icon bg-primary-subtle text-primary"><i class="bi bi-bank"></i></div>
+    <div><div class="text-body-secondary small">Total balance</div><div class="value">{{ balance|money }}</div></div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card p-3"><div class="d-flex align-items-center gap-3">
+    <div class="icon bg-warning-subtle text-warning"><i class="bi bi-percent"></i></div>
+    <div><div class="text-body-secondary small">Savings rate</div><div class="value">{{ savings_rate }}%</div></div></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8"><div class="card p-3 h-100">
+    <h6 class="fw-bold">Income vs Expenses · last 6 months</h6>
+    <div style="height:290px"><canvas id="trendChart"></canvas></div>
+  </div></div>
+  <div class="col-lg-4"><div class="card p-3 h-100">
+    <h6 class="fw-bold">Spending by category</h6>
+    {% if by_cat %}<div style="height:290px"><canvas id="catChart"></canvas></div>
+    {% else %}<div class="text-body-secondary text-center my-auto">No expenses this month yet.</div>{% endif %}
+  </div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card p-3 mb-3">
+      <h6 class="fw-bold"><i class="bi bi-graph-up-arrow me-1"></i>Smart insights</h6>
+      <div class="d-flex justify-content-between small py-1"><span>Daily average spend</span><strong>{{ daily_avg|money }}</strong></div>
+      <div class="d-flex justify-content-between small py-1"><span>Projected month-end spend</span><strong>{{ forecast|money }}</strong></div>
+      {% if by_cat %}<div class="d-flex justify-content-between small py-1"><span>Top category</span><strong>{{ by_cat[0].name }}</strong></div>{% endif %}
+    </div>
+    <div class="card p-3">
+      <div class="d-flex justify-content-between"><h6 class="fw-bold">Budgets</h6><a href="{{ url_for('budgets') }}" class="small">Manage</a></div>
+      {% for b in budgets %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small"><span><span class="dot" style="background:{{ b.color }}"></span>{{ b.name }}</span>
+            <span>{{ b.spent|money }} / {{ b.monthly_limit|money }}</span></div>
+          <div class="progress"><div class="progress-bar {{ 'bg-danger' if b.pct>=100 else 'bg-warning' if b.pct>=80 else 'bg-success' }}" style="width:{{ [b.pct,100]|min }}%"></div></div>
+        </div>
+      {% else %}<div class="text-body-secondary small">No budgets set. <a href="{{ url_for('budgets') }}">Create one</a>.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-8"><div class="card p-3 h-100">
+    <div class="d-flex justify-content-between"><h6 class="fw-bold">Recent transactions</h6><a href="{{ url_for('transactions') }}" class="small">View all</a></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="text-end">Amount</th></tr></thead>
+      <tbody>
+      {% for t in recent %}
+        <tr><td class="text-nowrap">{{ t.txn_date.strftime('%d %b') }}</td><td>{{ t.description }}</td>
+          <td><span class="badge badge-cat"><span class="dot" style="background:{{ t.color or '#adb5bd' }}"></span>{{ t.cat_name or 'Uncategorized' }}</span></td>
+          <td class="text-end fw-semibold {{ 'text-success' if t.type=='income' else 'text-danger' }}">{{ '+' if t.type=='income' else '-' }}{{ t.amount|money }}</td></tr>
+      {% else %}<tr><td colspan="4" class="text-center text-body-secondary py-4">No transactions yet. Add your first one!</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const trend = {{ trend|tojson }};
+new Chart(document.getElementById('trendChart'), {
+  type: 'bar',
+  data: { labels: trend.map(t => t.label), datasets: [
+    { label: 'Income', data: trend.map(t => t.income), backgroundColor: '#22c55e', borderRadius: 6 },
+    { label: 'Expenses', data: trend.map(t => t.expense), backgroundColor: '#ef4444', borderRadius: 6 } ] },
+  options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+});
+{% if by_cat %}
+const cats = {{ by_cat|map(attribute='name')|list|tojson }};
+const vals = {{ by_cat|map(attribute='total')|map('float')|list|tojson }};
+const cols = {{ by_cat|map(attribute='color')|list|tojson }};
+new Chart(document.getElementById('catChart'), {
+  type: 'doughnut',
+  data: { labels: cats, datasets: [{ data: vals, backgroundColor: cols, borderWidth: 0 }] },
+  options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+});
+{% endif %}
+</script>
+{% endblock %}

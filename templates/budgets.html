@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Budgets{% endblock %}
+{% block content %}
+<h3 class="page-title mb-1">Monthly budgets</h3>
+<p class="text-body-secondary">{{ month_label }} · you'll get an alert when spending crosses 80% and 100%.</p>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card p-3">
+    <h6 class="fw-bold">Set / update a budget</h6>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3"><label class="form-label">Category</label>
+        <select name="category_id" class="form-select" required>
+          {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+      <div class="mb-3"><label class="form-label">Monthly limit ({{ currency }})</label>
+        <input type="number" step="0.01" min="1" name="monthly_limit" class="form-control" required></div>
+      <button class="btn btn-brand w-100">Save budget</button>
+    </form>
+  </div></div>
+  <div class="col-lg-8"><div class="card p-3">
+    {% for b in rows %}
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <strong><span class="dot" style="background:{{ b.color }}"></span>{{ b.name }}</strong>
+          <form method="post" action="{{ url_for('delete_budget', bid=b.id) }}" data-confirm="Remove this budget?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x-lg"></i></button></form>
+        </div>
+        <div class="small text-body-secondary mb-1">{{ b.spent|money }} of {{ b.monthly_limit|money }} · {{ b.pct }}%
+          {% if b.pct >= 100 %}<span class="badge bg-danger ms-1">Over budget</span>{% elif b.pct >= 80 %}<span class="badge bg-warning text-dark ms-1">Almost there</span>{% endif %}</div>
+        <div class="progress"><div class="progress-bar {{ 'bg-danger' if b.pct>=100 else 'bg-warning' if b.pct>=80 else 'bg-success' }}" style="width:{{ [b.pct,100]|min }}%"></div></div>
+      </div>
+    {% else %}<div class="text-body-secondary text-center py-4">No budgets yet. Create one on the left.</div>{% endfor %}
+  </div></div>
+</div>
+{% endblock %}
